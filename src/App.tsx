@@ -1,11 +1,11 @@
-import { UseState } from './UseEffect'
+import { DeleteConfirmation } from './DeleteConfirmation'
 import { ClassState } from './ClassState'
 import './App.css'
 
 function App() {
   return (
     <>
-      <UseState name="useState"/>
+      <DeleteConfirmation name="useState"/>
       <ClassState name="classState"/>
     </>
   )
