@@ -1,61 +1,32 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useReducer } from "react";
+import { reducer, initialState } from "./useReducer";
 
 type DeleteConfirmationProps = {
   name: string;
 };
 
-interface State {
-  error: boolean;
-  loading: boolean;
-  value: string;
-  authorized: boolean;
-  deleted: boolean;
-}
-
 const SECURITY_CODE = "paradigma";
 
 export function DeleteConfirmation({ name }: DeleteConfirmationProps) {
-  const initialState: State = {
-    error: false,
-    loading: false,
-    value: "",
-    authorized: false,
-    deleted: false,
-  };
-
-  const [state, setState] = useState(initialState);
-
+  const [state, dispatch] = useReducer(reducer, initialState);
   const { error, loading, value, authorized, deleted } = state;
- 
-  const changeState = (newState: Partial<State>) => {
-    setState((prev) => ({ ...prev, ...newState }));
-  };
-
-  const toggleLoading = () => {
-    setState((prev) => ({ ...prev, loading: !prev.loading }));
-  };
-
-  const onLoading = () => {
-    changeState({ error: false });
-    setTimeout(() => {
-      if (value !== SECURITY_CODE) {
-        changeState({ error: true });
-      } else {
-        changeState({ authorized: true });
-      }
-      toggleLoading();
-    }, 3000);
-  };
-
-  const onValueChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    changeState({ value: event.target.value });
-    console.log(event.target.value);
-  };
+  const handleCheck = () => dispatch({ type: "LOADING" });
+  const handleDelete = () => dispatch({ type: "DELETED" });
+  const handleBack = () => dispatch({ type: "BACK" });
+  const handleReset = () => dispatch({ type: "RESET" });
 
   useEffect(() => {
+    let timeoutId: NodeJS.Timeout;
     if (loading) {
-      onLoading();
+      timeoutId = setTimeout(() => {
+        if (value !== SECURITY_CODE) {
+          dispatch({ type: "ERROR" });
+        } else {
+          dispatch({ type: "AUTHORIZED" });
+        }
+      }, 3000);
     }
+    return () => clearTimeout(timeoutId);
   }, [loading]);
 
   if (!authorized && !deleted) {
@@ -73,9 +44,14 @@ export function DeleteConfirmation({ name }: DeleteConfirmationProps) {
           type="text"
           placeholder="Código de seguridad"
           value={value}
-          onChange={(event) => onValueChange(event)}
+          disabled={loading}
+          onChange={(event) =>
+            dispatch({ type: "CHANGE_VALUE", payload: event.target.value })
+          }
         />
-        <button onClick={toggleLoading}>Comprobar</button>
+        <button disabled={loading} onClick={handleCheck}>
+          Comprobar
+        </button>
       </div>
     );
   } else if (authorized && !deleted) {
@@ -83,33 +59,15 @@ export function DeleteConfirmation({ name }: DeleteConfirmationProps) {
       <>
         <h1>Eliminar DeleteConfirmation</h1>
         <p>¿Seguro que quieres eliminar DeleteConfirmation?</p>
-        <button
-          onClick={() => {
-            changeState({ deleted: true });
-          }}
-        >
-          Sí, eliminar
-        </button>
-        <button
-          onClick={() => {
-            changeState({ authorized: false, value: "" });
-          }}
-        >
-          No, volver
-        </button>
+        <button onClick={handleDelete}>Sí, eliminar</button>
+        <button onClick={handleBack}>No, volver</button>
       </>
     );
-  } else if (authorized && deleted) {
+  } else if (deleted) {
     return (
       <>
         <h1>DeleteConfirmation fue eliminado</h1>
-        <button
-          onClick={() => {
-            changeState(initialState);
-          }}
-        >
-          Recuperar DeleteConfirmation
-        </button>
+        <button onClick={handleReset}>Recuperar DeleteConfirmation</button>
       </>
     );
   }
